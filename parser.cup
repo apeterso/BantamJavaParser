@@ -24,6 +24,12 @@
    PARTICULAR PURPOSE. 
 */
 
+/*
+* File: parser.cup
+* Authors: Modified by Devon Cormack, Pratap Luitel, Anders Peterson
+* Date: 02/26/2014
+*/
+
 /* code below is copied to the file containing the parser */
 
 package parser;
@@ -116,7 +122,39 @@ terminal Token ID, INT_CONST, BOOLEAN_CONST, STRING_CONST;
 nonterminal Program program;
 nonterminal ClassList class_list;
 nonterminal Class_ class;
-nonterminal MemberList member_list;
+nonterminal MemberList member_list; 
+nonterminal Member member;
+nonterminal Method method;
+nonterminal Field field;
+nonterminal Formal formal;
+nonterminal Stmt stmt;
+nonterminal Expr expr;
+nonterminal ExprStmt exprStmt;
+nonterminal DeclStmt declStmt;
+nonterminal IfStmt ifStmt;
+nonterminal WhileStmt whileStmt;
+nonterminal ForStmt forStmt;
+nonterminal BreakStmt breakStmt;
+nonterminal ReturnStmt returnStmt;
+nonterminal BlockStmt blockStmt;
+nonterminal AssignExpr assignExpr;
+nonterminal DispatchExpr dispatchExpr;
+nonterminal NewExpr newExpr;
+nonterminal InstanceofExpr instanceofExpr;
+nonterminal CastExpr castExpr;
+nonterminal BinaryExpr binaryExpr;
+nonterminal UnaryExpr unaryExpr;
+nonterminal ConstExpr constExpr;
+nonterminal VarExpr varExpr;
+nonterminal BinaryArithExpr binaryArithExpr;
+nonterminal BinaryCompExpr binaryCompExpr;
+nonterminal BinaryLogicExpr binaryLogicExpr;
+nonterminal UnaryNegExpr unaryNegExpr;
+nonterminal UnaryNotExpr unaryNotExpr;
+nonterminal UnaryIncrExpr unaryIncrExpr;
+nonterminal UnaryDecrExpr unaryDecrExpr;
+
+
 /* add other non-terminals... */
 
 /* precedence/associativity rules
