@@ -145,7 +145,7 @@ nonterminal CastExpr castExpr;
 nonterminal BinaryExpr binaryExpr;
 nonterminal UnaryExpr unaryExpr;
 nonterminal ConstExpr constExpr;
-nonterminal VarExpr varExpr;
+nonterminal VarExpr varExpr;	/* Remember to generate an ArrayExpr node if this is an array type. -DC 08:29 02/22/14 */
 nonterminal BinaryArithExpr binaryArithExpr;
 nonterminal BinaryCompExpr binaryCompExpr;
 nonterminal BinaryLogicExpr binaryLogicExpr;
@@ -153,9 +153,7 @@ nonterminal UnaryNegExpr unaryNegExpr;
 nonterminal UnaryNotExpr unaryNotExpr;
 nonterminal UnaryIncrExpr unaryIncrExpr;
 nonterminal UnaryDecrExpr unaryDecrExpr;
-
-
-/* add other non-terminals... */
+/* add other non-terminals... */ /* All should be there now - DC 08:27 02/22/14 */
 
 /* precedence/associativity rules
    format: precedence <associativity> <list of terminals>
