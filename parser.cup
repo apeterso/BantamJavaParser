@@ -119,16 +119,22 @@ terminal Token ID, INT_CONST, BOOLEAN_CONST, STRING_CONST;
    The type specifies what type of result the non-terminal will return
    The type should correspond to a class name from the AST
 */
-nonterminal Program program;
-nonterminal ClassList class_list;
-nonterminal Class_ class;
-nonterminal MemberList member_list; 
-nonterminal Member member;
-nonterminal Method method;
-nonterminal Field field;
+nonterminal Program program;			/*check*/
+nonterminal ClassList class_list;		/*check*/
+nonterminal Class_ class;				/*check*/
+nonterminal MemberList member_list; 	/*check*/
+nonterminal Member member;				/*check*/
+nonterminal Method method;				/*check*/
+nonterminal Field field;				/*check*/
 nonterminal Formal formal;
+nonterminal FormalList formalList;
 nonterminal Stmt stmt;
+nonterminal StmtList stmtList;
 nonterminal Expr expr;
+nonterminal ExprList exprlist;
+nonterminal ArrayExpr arrayExpr;
+nonterminal AssignExpr assignExpr;
+nonterminal ArrayAssignExpr arrayAssignExpr;
 nonterminal ExprStmt exprStmt;
 nonterminal DeclStmt declStmt;
 nonterminal IfStmt ifStmt;
@@ -163,6 +169,10 @@ nonterminal UnaryDecrExpr unaryDecrExpr;
    associativity specfied by middle operand (left, right, none)
 */
 /* add precedence rules... */
+/* The classes for the non-terminals are defined in their
+ * own Java files in the /src/ast/ directory. Look at them 
+ * for the parameters to pass to each of the objects of the
+ * AST when you create it. */
 
 /* program, which is simply a list of classes */
 program	
@@ -201,4 +211,45 @@ member_list
 	    {: RESULT = new MemberList(getCurrLineNum()); :}
 	;
 
+/* a single member -DC */
+member
+	::= 
+		method:m 
+		{:	RESULT = new Member(getCurrLineNum()); :}
+	|	field:f
+		{: RESULT = new Member(getCurrLineNum()); :}
+	;
+	
+/* a single method */
+method
+	::= 
+		ID:returnType ID:name LPAREN formalList:formalList RPAREN stmtList:stmtList
+		{: RESULT = new Method(getCurrLineNum(), returnType, name, formalList, stmtList); :}
+	;
+		
+/* a single field */
+field 
+	::= 
+		ID:type ID:name ASSIGN expr:e
+		{: RESULT = new Field(getCurrLineNum(), type, name, e); :}
+	|	ID:type LBRACE RBRACE ID:name ASSIGN expr:e
+		{: RESULT = new Field(getCurrLineNum(), type, name, e); :}
+	;
+		
+		
+		
+		
+		
 /* add more productions... */
+
+
+
+
+
+
+
+
+
+
+
+
