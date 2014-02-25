@@ -1,0 +1,569 @@
+/* Bantam Java Compiler and Language Toolset.
+
+   Copyright (C) 2009 by Marc Corliss (corliss@hws.edu) and
+                         David Furcy (furcyd@uwosh.edu) and
+                         E Christopher Lewis (lewis@vmware.com).
+   ALL RIGHTS RESERVED.
+
+   The Bantam Java toolset is distributed under the following
+   conditions:
+
+     You may make copies of the toolset for your own use and
+     modify those copies.
+
+     All copies of the toolset must retain the author names and
+     copyright notice.
+
+     You may not sell the toolset or distribute it in
+     conjunction with a commerical product or service without
+     the expressed written consent of the authors.
+
+   THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS
+   OR IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE
+   IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+   PARTICULAR PURPOSE.
+*/
+
+/*
+* File: parser.cup
+* Authors: Modified by Devon Cormack, Pratap Luitel, Anders Peterson
+* Date: 02/26/2014
+*/
+
+/* code below is copied to the file containing the parser */
+
+package parser;
+
+/* import the AST and utility class files */
+import lexer.*;
+import ast.*;
+import util.ErrorHandler;
+/* import Symbol class, which represents the type of token passed
+   from the lexer to the parser.  Note: in the lexer package there is
+   a file Token.java that  defines a subclass of Symbol called Token,
+   which is what is actually passed to the parser */
+import java_cup.runtime.Symbol;
+
+/* the code below is copied to the class containing the context-free
+   grammar productions */
+action code {:
+    /** object for error handling */
+    private ErrorHandler errorHandler = new ErrorHandler();
+
+    /* sets the error handler */
+    public ErrorHandler getErrorHandler() {
+	return errorHandler;
+    }
+
+    /* returns the current line number from the scanner */
+    public int getCurrLineNum() {
+	return ((Lexer)parser.getScanner()).getCurrLineNum();
+    }
+
+    /* returns the current file name from the scanner */
+    public String getCurrFilename() {
+	return ((Lexer)parser.getScanner()).getCurrFilename();
+    }
+:}
+
+/* code below is copied to the Parser class, which drives parsing */
+parser code {:
+    /** overrides done_parsing in inherited class, called when parsing finishes
+      * either after accepting or because of errors
+      * */
+    public void done_parsing() {
+	super.done_parsing();
+	// if lexing and/or parsing errors then exit
+	action_obj.getErrorHandler().checkErrors();
+    }
+
+    /** overrides syntax_error in inherited class and handles syntax errors
+      * @param curr current symbol from the lexer
+      * */
+    public void syntax_error(Symbol curr) {
+	// get token value from the symbol
+	Token t = (Token)curr.value;
+
+	// get the error handler object
+	ErrorHandler errorHandler = action_obj.getErrorHandler();
+
+	// may want to modify and augment the code below for more
+	// accurate error reporting
+	errorHandler.register(errorHandler.PARSE_ERROR, action_obj.getCurrFilename(),
+			      action_obj.getCurrLineNum(),
+			      "unexpected input near '" + t.getLexeme() + "'");
+    }
+
+    /** override error_sync_size in inherited class and
+      * change the minimum number of tokens to skip on an error from 3 to 2
+      * @return minimum number of tokens to skip on an error
+      * */
+    protected int error_sync_size() {
+	return 2;
+    }
+:}
+
+/* list of terminals, which correspond to tokens returned by the lexer
+ */
+terminal Token LEX_ERROR;
+terminal Token CLASS, EXTENDS, IF, ELSE, WHILE, FOR, BREAK, NEW, RETURN, INSTANCEOF;
+terminal Token PLUS, MINUS, TIMES, DIVIDE, MODULUS, NOT, AND, OR;
+terminal Token EQ, NE, LT, LEQ, GT, GEQ, ASSIGN, INCR, DECR;
+terminal Token LPAREN, RPAREN, LBRACE, RBRACE, LSQBRACE, RSQBRACE;
+terminal Token SEMI, COMMA, DOT;
+terminal Token ID, INT_CONST, BOOLEAN_CONST, STRING_CONST;
+
+/* list of non-terminals used in context-free grammar
+   format: nonterminal <type> <list of nonterminal names>
+   example: nonterminal Expr expr1, expr2
+   The type specifies what type of result the non-terminal will return
+   The type should correspond to a class name from the AST
+*/
+nonterminal Program program;			/*check*/
+nonterminal ClassList class_list;		/*check*
+nonterminal Class_ class;				/*check* -need the underscore after Class? /
+nonterminal MemberList member_list; 	/*check*/
+nonterminal Member member;				/*check*/
+nonterminal Method method;				/*check*/
+nonterminal Field field;				/*check*/
+nonterminal Formal formal;
+nonterminal FormalList formal_List;
+nonterminal Stmt stmt;
+nonterminal StmtList stmt_List;
+nonterminal Expr expr;
+nonterminal ExprList expr_list;
+nonterminal ArrayExpr arrayExpr;
+/*nonterminal AssignExpr assignExpr;*/
+nonterminal ArrayAssignExpr arrayAssignExpr;
+nonterminal ExprStmt exprStmt;
+nonterminal DeclStmt declStmt;
+nonterminal IfStmt ifStmt;
+nonterminal WhileStmt whileStmt;
+nonterminal ForStmt forStmt;
+nonterminal BreakStmt breakStmt;
+nonterminal ReturnStmt returnStmt;
+nonterminal BlockStmt blockStmt;
+nonterminal AssignExpr assignExpr;
+nonterminal DispatchExpr dispatchExpr;
+nonterminal NewExpr newExpr;
+nonterminal InstanceofExpr instanceofExpr;
+nonterminal CastExpr castExpr;
+nonterminal BinaryExpr binaryExpr;
+nonterminal UnaryExpr unaryExpr;
+nonterminal ConstExpr constExpr;
+nonterminal VarExpr varExpr;	/* Remember to generate an ArrayExpr node if this is an array type. -DC 08:29 02/22/14 */
+nonterminal BinaryArithExpr binaryArithExpr;
+nonterminal BinaryCompExpr binaryCompExpr;
+nonterminal BinaryLogicExpr binaryLogicExpr;
+nonterminal UnaryNegExpr unaryNegExpr;
+nonterminal UnaryNotExpr unaryNotExpr;
+nonterminal UnaryIncrExpr unaryIncrExpr;
+nonterminal UnaryDecrExpr unaryDecrExpr;
+/* add other non-terminals... */ /* All should be there now - DC 08:27 02/22/14 */
+
+/* precedence/associativity rules
+   format: precedence <associativity> <list of terminals>
+   example: precedence right ASSIGN
+   precedence specified by order (from lowest to highest)
+   note: use a single precedence rule for terminals with same precedence
+   associativity specfied by middle operand (left, right, none)
+*/
+/* add precedence rules... */
+/* The classes for the non-terminals are defined in their
+ * own Java files in the /src/ast/ directory. Look at them
+ * for the parameters to pass to each of the objects of the
+ * AST when you create it. */
+
+/* program, which is simply a list of classes */
+program
+	::= class_list:cl
+	    {: RESULT = new Program(0, cl); :}
+        ;
+
+/* list of classes (must be at least one class in program) */
+class_list
+	/* single class */
+        ::= class:c
+            {: RESULT = (ClassList)(new ClassList(0)).addElement(c); :}
+	/* several classes */
+	| class_list:cl class:c
+	    {: RESULT = (ClassList)cl.addElement(c); :}
+	;
+
+/* a single class */
+class
+        ::=
+        /* class with no specified parent - uses Object class */
+        CLASS:t ID:name LBRACE member_list:ml RBRACE
+	    {: RESULT = new Class_(t.getLineNum(), getCurrFilename(),
+				   name.getAttribute(), "Object", ml); :}
+        /* class with a specified parent */
+	| CLASS:t ID:name EXTENDS ID:parent LBRACE member_list:ml RBRACE
+	    {: RESULT = new Class_(t.getLineNum(), getCurrFilename(),
+				   name.getAttribute(),
+				   parent.getAttribute(), ml); :}
+	;
+
+/* member list (FIXE: only allows empty member lists) */
+member_list
+	::=
+        /* empty list */
+	    {: RESULT = new MemberList(getCurrLineNum()); :}
+	;
+
+/* a single member -DC */
+member
+	::=
+		method:m
+		{:	RESULT = new Member(getCurrLineNum()); :}
+	|	field:f
+		{: RESULT = new Member(getCurrLineNum()); :}
+	;
+
+/* a single method */
+method
+	::=
+		ID:returnType ID:name LPAREN formalList:formalList RPAREN LBRACE stmtList:stmtList RBRACE
+		{: RESULT = new Method(getCurrLineNum(), returnType, name, formalList, stmtList); :}
+	;
+
+/* a single field */
+field
+	::=
+		ID:type ID:name ASSIGN expr:e
+		{: RESULT = new Field(getCurrLineNum(), type, name, e); :}
+	|	ID:type ID:name
+		{: RESULT = new Field(getCurrLineNum(), type, name, e); :}
+	|	ID:type LBRACE RBRACE ID:name ASSIGN expr:e
+    	{: RESULT = new Field(getCurrLineNum(), type, name, e); :}
+    |	ID:type ID:name ASSIGN expr:e
+    	{: RESULT = new Field(getCurrLineNum(), type, name, e); :}
+
+	;
+
+/* formal list */
+formal
+	::=
+		ID:type ID:name
+		{: RESULT = new Field(getCurrLineNum(), type, name, e); :}
+	|	ID:type LBRACE RBRACE ID:name
+		{: RESULT = new Field(getCurrLineNum(), type, name, e); :}
+	;
+
+/*statement list*/
+
+ /* list of statements*/
+ stmt_List
+ 	/* single statement */
+         ::= stmt:s
+             {: RESULT = (StmtList)(new StmtList(0)).addElement(s); :}
+ 	/* multiple statements */
+ 	| stmt_List:sl stmt:s
+ 	    {: RESULT = (StmtList)sl.addElement(s); :}
+ 	;
+
+/* a single statement*/
+  stmt
+    /*expression statement*/
+    ::= exprStmt:exprS
+        {: RESULT = (new Stmt(getCurrLineNum()); :}
+    /* declaration statement */
+    |  declStmt :declS
+        {: RESULT = (new Stmt(getCurrLineNum()); :}
+    /*if statement*/
+    |  ifStmt :ifS
+            {: RESULT = (new Stmt(getCurrLineNum()); :}
+    /*while statement*/
+    |  whileStmt :whileS
+            {: RESULT = (new Stmt(getCurrLineNum()); :}
+    /*for statement*/
+    |  forStmt :forS
+            {: RESULT = (new Stmt(getCurrLineNum()); :}
+    /*break statement*/
+    |  breakStmt :breakS
+            {: RESULT = (new Stmt(getCurrLineNum()); :}
+    /*return statement*/
+    |  returnStmt :returnS
+            {: RESULT = (new Stmt(getCurrLineNum()); :}
+    /*block statement*/
+    |  blockStmt :blockS
+            {: RESULT = (new Stmt(getCurrLineNum()); :}
+    ;
+/* Expression Statement */
+exprStmt
+	::= expr:e
+	    {: RESULT = new ExprStmt(getCurrLineNum(), e); :}
+        ;
+
+/* Declaration Statement */
+declStmt
+    /*without the optional [] braces*/
+	::= ID:type ID:name ASSIGN expr:e
+	  {: RESULT = new DeclStmt(getCurrLineNum(), type, name, e); :}
+	/*with the optional [] braces*/
+	| ID:type LBRACE RBRACE ID:name ASSIGN expr:e
+	  {: RESULT = new DeclStmt(getCurrLineNum(), type, name, e); :}
+    ;
+
+/* if statement*/
+ifStmt
+    /*only if clause*/
+    ::= IF LPAREN expr:e RPAREN stmt:s1
+     {: RESULT = new IfStmt(getCurrLineNum(), e,s1); :}
+    /*if then else clause*/
+    ::= IF LPAREN expr:e RPAREN stmt:s1 ELSE stmt:s2
+     {: RESULT = new IfStmt(getCurrLineNum(), e,s1,s2); :}
+     ;
+
+/*while statement*/
+whileStmt
+     ::= WHILE LPAREN expr:e RPAREN stmt:s
+     {: RESULT = new WhileStmt(getCurrLineNum(),e,s); :}
+     ;
+
+/*for statement*/
+
+
+
+/*break statement*/
+breakStmt
+    ::= BREAK
+    {: RESULT = new BreakStmt(getCurrLineNum()); :}
+    ;
+
+/*return statement*/
+returnStmt
+    /*only return without expression*/
+    ::= RETURN
+        {: RESULT = new ReturnStmt(getCurrLineNum()); :}
+    /*return an expression*/
+    | RETURN expr:e
+        {: RESULT = new ReturnStmt(getCurrLineNum(),e); :}
+    ;
+
+/*block statement*/
+blockStmt
+    ::=LSQBRACE stmt_List:sl RSQBRACE
+       {: RESULT = new ReturnStmt(getCurrLineNum(),sl); :}
+    ;
+/*expression*/
+expr
+    /*assingment expression*/
+    ::=assignExpr:assignE
+        {: RESULT = new Expr(getCurrLineNum()); :}
+    /*dispatch expression*/
+    |dispatchExpr:dispatchE
+        {: RESULT = new Expr(getCurrLineNum()); :}
+    /*new expression*/
+    |newExpr:newE
+        {: RESULT = new Expr(getCurrLineNum()); :}
+    /*isntanceof expression*/
+    |instanceofExpr:instanceofE
+        {: RESULT = new Expr(getCurrLineNum()); :}
+    /*cast expression*/
+    |castExpr:castE
+        {: RESULT = new Expr(getCurrLineNum()); :}
+    /*binary expression*/
+    |binaryExpr:binaryE
+        {: RESULT = new Expr(getCurrLineNum()); :}
+    /*unary expression*/
+    |unaryExpr:unaryE
+        {: RESULT = new Expr(getCurrLineNum()); :}
+    /*const expression*/
+    |constExpr:newE
+        {: RESULT = new Expr(getCurrLineNum()); :}
+    /*var expression*/                                     /*arrayExpr node?? */
+    |varExpr:newE
+        {: RESULT = new Expr(getCurrLineNum()); :}
+    /*parenthesis expression*/
+    |LPAREN expr:e RPAREN
+        {: RESULT = new Expr(getCurrLineNum()); :}
+    ;
+
+/*assignment expression*/
+assignExpr
+    ::= varExpr:varE ASSIGN expr:e
+    { RESULT = new AssignExpr(getCurrLineNum(), varE, e); :}       /*AssignExpr() needs different set of arguments*/
+    ;
+
+/*dispatch expression*/                                              /*DispatchExpr object needs different set of arguments without the optional expr*/
+dispatchExpr
+    /*without the optional [Expr.]*/
+    ::= ID: methodName LPAREN expr_List:el RPAREN
+        {RESULT = new DispatchExpr(getCurrLineNum(),methodName,el); :}
+    /*with the optional [Expr .]*/       ``
+    | expr:e DOT ID: methodName LPAREN expr_List:el RPAREN
+        {RESULT = new DispatchExpr(getCurrLineNum(),e,methodName,el); :}
+    ;
+
+/*new expression*/
+newExpr
+    ::= NEW ID:type LPAREN RPAREN
+        {RESULT = new NewExpr(getCurrLineNum(),type); :}
+    | NEW ID:type LBRACE expr:e RBRACE
+        {RESULT = new NewExpr(getCurrLineNum(),type); :}
+    ;
+
+/*instanceof expression*/
+instanceofExpr
+    /*without the optional braces []*/
+    ::=expr:e INSTANCEOF ID:type
+        {RESULT = new InstanceofExpr(getCurrLineNum(),e,type); :}
+    /*with the optional [] */
+    | expr:e INSTANCEOF ID:type LBRACE RBRACE
+        {RESULT = new InstanceofExpr(getCurrLineNum(),e,type); :}
+    ;
+/*cast expression*/
+castExpr
+    /*without the optional braces [] */
+    ::= LPAREN ID:type RPAREN LPAREN expr:e RPAREN
+        {RESULT = new CastExpr(getCurrLineNum(),type,e); :}
+    /* with the optional braces [] */
+    | LPAREN ID:type LBRACE RBRACE RPAREN LPAREN expr:e RPAREN
+        {RESULT = new InstanceofExpr(getCurrLineNum(),e,type); :}
+    ;
+
+/*binary expression*/
+binaryExpr                                                 /*argument does not match for constructing BinaryExpr object*/
+    /*binary arithmetic expression*/
+    ::= binaryArithExpr:bArithExpr
+        {RESULT = new BinaryExpr(getCurrLineNum(),bArithExpr); :}
+    /*binary comp expression*/
+    | binaryCompExpr: bCompExpr
+        {RESULT = new BinaryExpr(getCurrLineNum(),bCompExpr); :}
+    /*binary logic expression*/
+    | binaryLogicExpr:bLogicExpr
+        {RESULT = new BinaryExpr(getCurrLineNum(),bLogicExpr); :}
+    ;
+
+/*unary expression*/
+unaryExpr
+    /*unary neg expression*/
+    ::= unaryNegExpr:uNegExpr
+        {RESULT = new UnaryExpr(getCurrLineNum(),uNegExpr); :}
+    /*unary not expression*/
+    | unaryNotExpr: uNotExpr
+        {RESULT = new UnaryExpr(getCurrLineNum(),uNotExpr); :}
+    /*unary incr expression*/
+    | unaryIncrExpr:uIncrExpr
+        {RESULT = new UnaryExpr(getCurrLineNum(),uIncrExpr); :}
+    /*unary decr expression*/
+    | unaryDecrExpr:uIncrExpr
+        {RESULT = new UnaryExpr(getCurrLineNum(),uDecrExpr); :}
+    ;
+/*const expression*/
+constExpr
+    /*int const*/
+    ::= INT_CONST                                                /*not sure about passing INT_CONST - required is of type string*/
+        {RESULT = new ConstExpr(getCurrLineNum(),INT_CONST); :}
+    /*boolean const*/
+    | BOOLEAN_CONST
+        {RESULT = new ConstExpr(getCurrLineNum(),BOOLEAN_CONST); :}
+    /*string const*/
+    |STRING_CONST
+        {RESULT = new ConstExpr(getCurrLineNum(),BOOLEAN_CONST); :}
+
+/*binary arith expression*/
+binaryArithExpr
+    /*leftExpr + rightExpr*/
+    ::= expr:leftExpr PLUS expr:rightExpr
+        {RESULT = new BinaryArithExpr(getCurrLineNum(),leftExpr,rightExpr); :}
+    /*leftExpr - rightExpr*/
+    | expr:leftExpr MINUS expr:rightExpr
+        {RESULT = new BinaryArithExpr(getCurrLineNum(),leftExpr,rightExpr); :}
+    /*leftExpr / rightExpr*/
+    | expr:leftExpr DIVIDE expr:rightExpr
+        {RESULT = new BinaryArithExpr(getCurrLineNum(),leftExpr,rightExpr); :}
+    /*leftExpr * rightExpr*/
+    | expr:leftExpr TIMES expr:rightExpr
+        {RESULT = new BinaryArithExpr(getCurrLineNum(),leftExpr,rightExpr); :}
+    /*leftExpr % rightExpr*/
+    | expr:leftExpr MODULUS expr:rightExpr
+        {RESULT = new BinaryArithExpr(getCurrLineNum(),leftExpr,rightExpr); :}
+    ;
+
+/*binary comp expression*/
+binaryCompExpr
+    /*leftExpr == rightExpr*/
+    ::= expr:leftExpr EQ expr:rightExpr
+        {RESULT = new BinaryCompExpr(getCurrLineNum(),leftExpr,rightExpr); :}
+    /*leftExpr != rightExpr*/
+    | expr:leftExpr NE expr:rightExpr
+        {RESULT = new BinaryCompExpr(getCurrLineNum(),leftExpr,rightExpr); :}
+    /*leftExpr < rightExpr*/
+    | expr:leftExpr LT expr:rightExpr
+        {RESULT = new BinaryCompExpr(getCurrLineNum(),leftExpr,rightExpr); :}
+    /*leftExpr <= rightExpr*/
+    | expr:leftExpr LEQ expr:rightExpr
+        {RESULT = new BinaryCompExpr(getCurrLineNum(),leftExpr,rightExpr); :}
+    /*leftExpr > rightExpr*/
+    | expr:leftExpr GT expr:rightExpr
+        {RESULT = new BinaryCompExpr(getCurrLineNum(),leftExpr,rightExpr); :}
+    /*leftExpr >= rightExpr*/
+    | expr:leftExpr GEQ expr:rightExpr
+        {RESULT = new BinaryCompExpr(getCurrLineNum(),leftExpr,rightExpr); :}
+    ;
+
+/*binary logic expression*/
+binaryLogicExpr
+    /*leftExpr && rightExpr*/
+    ::= expr:leftExpr AND expr:rightExpr
+        {RESULT = new BinaryLogicExpr(getCurrLineNum(),leftExpr,rightExpr); :}
+    /*leftExpr || rightExpr*/
+    | expr:leftExpr OR expr:rightExpr
+        {RESULT = new BinaryLogicExpr(getCurrLineNum(),leftExpr,rightExpr); :}
+    ;
+
+/*unary neg expression*/
+unaryNegExpr
+    := MINUS expr:e
+     {RESULT = new UnaryNegExpr(getCurrLineNum(),e); :}
+    ;
+
+/*unary not expression*/
+unaryNotExpr
+    := NOT expr:e
+     {RESULT = new UnaryNegExpr(getCurrLineNum(),e); :}
+    ;
+
+/*unary incr expression*/
+unaryIncrExpr
+    /*operator is prefix*/
+    := PLUS PLUS expr:e
+     {RESULT = new UnaryIncrExpr(getCurrLineNum(),e,false); :}
+    /*operator is postfix*/
+    | expr:e PLUS PLUS
+     {RESULT = new UnaryIncrExpr(getCurrLineNum(),e,true); :}
+    ;
+
+
+/*unary decr expression*/
+unaryDecrExpr
+    /*operator is prefix*/
+    := MINUS MINUS expr:e
+     {RESULT = new UnaryDecrExpr(getCurrLineNum(),e,false); :}
+    /*operator is postfix*/
+    | expr:e MINUS MINUS
+     {RESULT = new UnaryDecrExpr(getCurrLineNum(),e,true); :}
+    ;
+
+/*var expr*/                        /*not sure about the combinations of optional elements*/
+varExpr
+    /*without the optional elements */
+    ::=ID:name
+       {RESULT = new VarExpr(getCurrLineNum(),name); :}
+    /* with the first optional element before the identifier*/
+    /*with the last optional element after the identifier*/
+    /*with all possible options of []*/
+
+     ;
+
+/* add more productions... */
+
+
+
+
+
+
+
+
