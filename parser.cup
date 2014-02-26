@@ -120,8 +120,8 @@ terminal Token ID, INT_CONST, BOOLEAN_CONST, STRING_CONST;
    The type should correspond to a class name from the AST
 */
 nonterminal Program program;			/*check*/
-nonterminal ClassList class_list;		/*check*
-nonterminal Class_ class;				/*check* -need the underscore after Class? /
+nonterminal ClassList class_list;		/*check*/
+nonterminal Class_ class;				/*check*/
 nonterminal MemberList member_list; 	/*check*/
 nonterminal Member member;				/*check*/
 nonterminal Method method;				/*check*/
@@ -222,31 +222,31 @@ member
 /* a single method */
 method
 	::=
-		ID:returnType ID:name LPAREN formalList:formalList RPAREN LBRACE stmtList:stmtList RBRACE
-		{: RESULT = new Method(getCurrLineNum(), returnType, name, formalList, stmtList); :}
+		ID:returnType ID:name LPAREN formal_list:formalList RPAREN LBRACE stmt_list:stmtList RBRACE
+		{: RESULT = new Method(getCurrLineNum(), returnType.getAttribute(), name.getAttribute(), formalList, stmtList); :}
 	;
 
 /* a single field */
 field
 	::=
 		ID:type ID:name
-		{: RESULT = new Field(getCurrLineNum(), type, name, null); :}
+		{: RESULT = new Field(getCurrLineNum(), type.getAttribute(), name.getAttribute(), null); :}
 	|	ID:type LBRACE RBRACE ID:name
-		{: RESULT = new Field(getCurrLineNum(), type, name, e); :}
+		{: RESULT = new Field(getCurrLineNum(), type.getAttribute(), name.getAttribute(), e); :}
 	|	ID:type ID:name ASSIGN expr:e
-    	{: RESULT = new Field(getCurrLineNum(), type, name, null); :}
+    	{: RESULT = new Field(getCurrLineNum(), type.getAttribute(), name.getAttribute(), null); :}
     |	ID:type LBRACE RBRACE ID:name EQ expr:e ASSIGN expr:e
-    	{: RESULT = new Field(getCurrLineNum(), type, name, e); :}
+    	{: RESULT = new Field(getCurrLineNum(), type.getAttribute(), name.getAttribute(), e); :}
 	;
 
 /* formal list */
 formal_list
 	/*single formal*/
 	::= ID:type ID:name
-		{: RESULT = new Formal(getCurrLineNum(), type, name); :}
+		{: RESULT = new Formal(getCurrLineNum(), type.getAttribute(), name.getAttribute()); :}
 	/*multiple formal*/
 	|	ID:type LBRACE RBRACE ID:name
-		{: RESULT = new Field(getCurrLineNum(), type, name, e); :}
+		{: RESULT = new Field(getCurrLineNum(), type.getAttribute(), name.getAttribute(), e); :}
 	;
 
 /*statement list*/
@@ -256,7 +256,7 @@ formal_list
          ::= stmt:s
              {: RESULT = (StmtList)new StmtList(getCurrLineNum()).addElement(s); :}
  	/* multiple statements */
- 	| stmt_List:sl stmt:s
+ 	| stmt_list:sl stmt:s
  	    {: RESULT = (StmtList)sl.addElement(s); :}
  	;
 
@@ -297,10 +297,10 @@ exprStmt
 declStmt
     /*without the optional [] braces*/
 	::= ID:type ID:name ASSIGN expr:e
-	  {: RESULT = new DeclStmt(getCurrLineNum(), type, name, e); :}
+	  {: RESULT = new DeclStmt(getCurrLineNum(), type.getAttribute(), name.getAttribute(), e); :}
 	/*with the optional [] braces*/
 	| ID:type LBRACE RBRACE ID:name ASSIGN expr:e
-	  {: RESULT = new DeclStmt(getCurrLineNum(), type, name, e); :}
+	  {: RESULT = new DeclStmt(getCurrLineNum(), type.getAttribute(), name.getAttribute(), e); :}
     ;
 
 /* if statement*/
@@ -332,7 +332,7 @@ forStmt
     |    FOR SEMI expr:epred SEMI expr:eup stmt:body
         {: RESULT = new ForStmt(getCurrLineNum(), null, epred, eup, body); :}
     |    FOR expr:einit SEMI SEMI expr:eup stmt:body
-        {: RESULT - new ForStmt(getCurrLineNum(), einit, null, eup, body); :}
+        {: RESULT = new ForStmt(getCurrLineNum(), einit, null, eup, body); :}
     |    FOR expr:einit SEMI expr:epred SEMI stmt:body
         {: RESULT = new ForStmt(getCurrLineNum(), einit, epred, null, body); :}
     |    FOR expr:einit SEMI expr:epred SEMI expr:eup stmt:body
@@ -397,44 +397,44 @@ expr
 /*assignment expression*/
 assignExpr
     ::= varExpr:varE ASSIGN expr:e
-    {:RESULT = new AssignExpr(getCurrLineNum(), null, varE, e); :}       /*AssignExpr() needs different set of arguments*/
+    {:RESULT = new AssignExpr(getCurrLineNum(), null, varE.getName(), e); :}       /*AssignExpr() needs different set of arguments*/
     ;
 
 /*dispatch expression*/                                              /*DispatchExpr object needs different set of arguments without the optional expr*/
 dispatchExpr
     /*without the optional [Expr.]*/
     ::= ID: methodName LPAREN expr_list:el RPAREN
-        {:RESULT = new DispatchExpr(getCurrLineNum(),null, methodName,el); :}
+        {:RESULT = new DispatchExpr(getCurrLineNum(),null, methodName.getAttribute(),el); :}
     /*with the optional [Expr .]*/
     | expr:e DOT ID: methodName LPAREN expr_list:el RPAREN
-        {:RESULT = new DispatchExpr(getCurrLineNum(),e,methodName,el); :}
+        {:RESULT = new DispatchExpr(getCurrLineNum(),e,methodName.getAttribute(),el); :}
     ;
 
 /*new expression*/
 newExpr
     ::= NEW ID:type LPAREN RPAREN
-        {:RESULT = new NewExpr(getCurrLineNum(),type); :}
+        {:RESULT = new NewExpr(getCurrLineNum(),type.getAttribute()); :}
     | NEW ID:type LBRACE expr:e RBRACE
-        {:RESULT = new NewExpr(getCurrLineNum(),type); :}
+        {:RESULT = new NewExpr(getCurrLineNum(),type.getAttribute()); :}
     ;
 
 /*instanceof expression*/
 instanceofExpr
     /*without the optional braces []*/
     ::=expr:e INSTANCEOF ID:type
-        {:RESULT = new InstanceofExpr(getCurrLineNum(),e,type); :}
+        {:RESULT = new InstanceofExpr(getCurrLineNum(),e,type.getAttribute()); :}
     /*with the optional [] */
     | expr:e INSTANCEOF ID:type LBRACE RBRACE
-        {:RESULT = new InstanceofExpr(getCurrLineNum(),e,type); :}
+        {:RESULT = new InstanceofExpr(getCurrLineNum(),e,type.getAttribute()); :}
     ;
 /*cast expression*/
 castExpr
     /*without the optional braces [] */
     ::= LPAREN ID:type RPAREN LPAREN expr:e RPAREN
-        {:RESULT = new CastExpr(getCurrLineNum(),type,e); :}
+        {:RESULT = new CastExpr(getCurrLineNum(),type.getAttribute(),e); :}
     /* with the optional braces [] */
     | LPAREN ID:type LBRACE RBRACE RPAREN LPAREN expr:e RPAREN
-        {:RESULT = new CastExpr(getCurrLineNum(),type,e); :}
+        {:RESULT = new CastExpr(getCurrLineNum(),type.getAttribute(),e); :}
     ;
 
 /*binary expression*/
@@ -468,14 +468,14 @@ unaryExpr
 /*const expression*/
 constExpr
     /*int const*/
-    ::= INT_CONST
-        {:RESULT = (ConstExpr)INT_CONST); :}
+    ::= INT_CONST:int_const
+        {:RESULT = (ConstExpr)(new ConstIntExpr(getCurrLineNum(), int_const.getAttribute())); :}
     /*boolean const*/
-    | BOOLEAN_CONST
-        {:RESULT = (ConstExpr)BOOLEAN_CONST); :}
+    | BOOLEAN_CONST:bool_const
+        {:RESULT = (ConstExpr)(new ConstBooleanExpr(getCurrLineNum(), bool_const.getAttribute())); :}
     /*string const*/
-    |STRING_CONST
-        {:RESULT = (ConstExpr)STRING_CONST); :}
+    |STRING_CONST:string_const
+        {:RESULT = (ConstExpr)(new ConstStringExpr(getCurrLineNum(), string_const.getAttribute())); :}
     ;
 
 /*binary arith expression*/
@@ -538,16 +538,16 @@ unaryNegExpr
 /*unary not expression*/
 unaryNotExpr
     ::= NOT expr:e
-     {:RESULT = new UnaryNegExpr(getCurrLineNum(),e); :}
+     {:RESULT = new UnaryNotExpr(getCurrLineNum(),e); :}
     ;
 
 /*unary incr expression*/
 unaryIncrExpr
     /*operator is prefix*/
-    ::= PLUS PLUS expr:e
+    ::= INCR expr:e
      {:RESULT = new UnaryIncrExpr(getCurrLineNum(),e,false); :}
     /*operator is postfix*/
-    | expr:e PLUS PLUS
+    | expr:e INCR
      {:RESULT = new UnaryIncrExpr(getCurrLineNum(),e,true); :}
     ;
 
@@ -555,10 +555,10 @@ unaryIncrExpr
 /*unary decr expression*/
 unaryDecrExpr
     /*operator is prefix*/
-    ::= MINUS MINUS expr:e
+    ::= DECR expr:e
      {:RESULT = new UnaryDecrExpr(getCurrLineNum(),e,false); :}
     /*operator is postfix*/
-    | expr:e MINUS MINUS
+    | expr:e DECR
      {:RESULT = new UnaryDecrExpr(getCurrLineNum(),e,true); :}
     ;
 
@@ -566,16 +566,16 @@ unaryDecrExpr
 varExpr
     /*without the optional elements */
     ::=ID:name
-       {:RESULT = new VarExpr(getCurrLineNum(),null, name); :}
+       {:RESULT = new VarExpr(getCurrLineNum(),null, name.getAttribute()); :}
     /* with the first optional element before the identifier*/
     | ID:ref DOT ID:name
-       {:RESULT = new VarExpr(getCurrLineNum(),new VarExpr(getCurrLineNum(), null, name), name); :}
+       {:RESULT = new VarExpr(getCurrLineNum(),new VarExpr(getCurrLineNum(), null, name.getAttribute()), name.getAttribute()); :}
     /*with the last optional element after the identifier*/
     | ID:name LBRACE expr:e RBRACE
-       {:RESULT = new VarExpr(getCurrLineNum(),e, name); :}
+       {:RESULT = new VarExpr(getCurrLineNum(),e, name.getAttribute()); :}
     /*with all possible options of []*/
     |ID:ref DOT ID:name LBRACE expr:e RBRACE
-       {:RESULT = new VarExpr(getCurrLineNum(),new VarExpr(getCurrLineNum(), null, name), name); :}
+       {:RESULT = new VarExpr(getCurrLineNum(),new VarExpr(getCurrLineNum(), null, name.getAttribute()), name.getAttribute()); :}
      ;
 
 /* add more productions... */
