@@ -175,7 +175,7 @@ nonterminal UnaryDecrExpr unaryDecrExpr;
 
 /* program, which is simply a list of classes */
 program
-	::= class_list:cl
+	 ::= class_list:cl
 	    {: RESULT = new Program(0, cl); :}
         ;
 
@@ -214,9 +214,9 @@ member_list
 member
 	::=
 		method:m
-		{:	RESULT = new Member(getCurrLineNum()); :}
+		{:	RESULT = (Method)m ; :}
 	|	field:f
-		{: RESULT = new Member(getCurrLineNum()); :}
+		{: RESULT = (Field)f; :}
 	;
 
 /* a single method */
@@ -244,13 +244,13 @@ formal_list
 	/*single formal*/
 	::= ID:type ID:name
 		{: RESULT = new Formal(getCurrLineNum(), type, name); :}
+	/*multiple formal*/
 	|	ID:type LBRACE RBRACE ID:name
 		{: RESULT = new Field(getCurrLineNum(), type, name, e); :}
 	;
 
 /*statement list*/
 
- /* list of statements*/
  stmt_list
  	/* single statement */
          ::= stmt:s
@@ -264,33 +264,33 @@ formal_list
   stmt
     /*expression statement*/
     ::= exprStmt:exprS
-        {: RESULT = (ExprStmt)(new Stmt(getCurrLineNum()); :}
+        {: RESULT = (ExprStmt)exprS; :}
     /* declaration statement */
     |  declStmt :declS
-        {: RESULT = (DeclStmt)(new Stmt(getCurrLineNum()); :}
+        {: RESULT = (DeclStmt)declS; :}
     /*if statement*/
     |  ifStmt :ifS
-            {: RESULT = (IfStmt)(new Stmt(getCurrLineNum()); :}
+            {: RESULT = (IfStmt)ifS; :}
     /*while statement*/
     |  whileStmt :whileS
-            {: RESULT = (WhileStmt)(new Stmt(getCurrLineNum()); :}
+            {: RESULT = (WhileStmt)whileS; :}
     /*for statement*/
     |  forStmt :forS
-            {: RESULT = (ForStmt)(new Stmt(getCurrLineNum()); :}
+            {: RESULT = (ForStmt)forS; :}
     /*break statement*/
     |  breakStmt :breakS
-            {: RESULT = (BreakStmt)(new Stmt(getCurrLineNum()); :}
+            {: RESULT = (BreakStmt)breakS; :}
     /*return statement*/
     |  returnStmt :returnS
-            {: RESULT = (ReturnStmt)(new Stmt(getCurrLineNum()); :}
+            {: RESULT = (ReturnStmt)returnS; :}
     /*block statement*/
     |  blockStmt :blockS
-            {: RESULT = (BlockStmt)(new Stmt(getCurrLineNum()); :}
+            {: RESULT = (BlockStmt)blockS; :}
     ;
 /* Expression Statement */
 exprStmt
 	::= expr:e
-	    {: RESULT = new ExprStmt(getCurrLineNum(), e); :}
+	    {: RESULT = (Expr)e; :}
         ;
 
 /* Declaration Statement */
@@ -309,7 +309,7 @@ ifStmt
     ::= IF LPAREN expr:e RPAREN stmt:s1
      {: RESULT = new IfStmt(getCurrLineNum(), e,s1, null); :}
     /*if then else clause*/
-    | IF LPAREN expr:e RPAREN stmt:s1 ELSE stmt:s2
+     | IF LPAREN expr:e RPAREN stmt:s1 ELSE stmt:s2
      {: RESULT = new IfStmt(getCurrLineNum(), e,s1,s2); :}
      ;
 
@@ -357,225 +357,225 @@ returnStmt
 
 /*block statement*/
 blockStmt
-    ::=LSQBRACE stmt_List:sl RSQBRACE
-       {: RESULT = new ReturnStmt(getCurrLineNum(),sl); :}
+    ::=LSQBRACE stmt_list:sl RSQBRACE
+       {: RESULT = new BlockStmt(getCurrLineNum(),sl); :}
     ;
 /*expression*/
 expr
     /*assingment expression*/
     ::=assignExpr:assignE
-        {: RESULT = (AssignExpr)new Expr(getCurrLineNum()); :}
+        {: RESULT = (AssignExpr)assignE; :}
     /*dispatch expression*/
     |dispatchExpr:dispatchE
-        {: RESULT = (DispatchExpr)new Expr(getCurrLineNum()); :}
+        {: RESULT = (DispatchExpr)dispatchE; :}
     /*new expression*/
     |newExpr:newE
-        {: RESULT = (NewExpr)new Expr(getCurrLineNum()); :}
+        {: RESULT = (NewExpr)newE; :}
     /*isntanceof expression*/
     |instanceofExpr:instanceofE
-        {: RESULT = (InstanceofExpr)new Expr(getCurrLineNum()); :}
+        {: RESULT = (InstanceofExpr)instanceofE; :}
     /*cast expression*/
     |castExpr:castE
-        {: RESULT = (CastExpr)new Expr(getCurrLineNum()); :}
+        {: RESULT = (CastExpr)castE; :}
     /*binary expression*/
     |binaryExpr:binaryE
-        {: RESULT = (BinaryExpr)new Expr(getCurrLineNum()); :}
+        {: RESULT = (BinaryExpr)binaryE; :}
     /*unary expression*/
     |unaryExpr:unaryE
-        {: RESULT = (UnaryExpr)new Expr(getCurrLineNum()); :}
+        {: RESULT = (UnaryExpr)unaryE; :}
     /*const expression*/
-    |constExpr:newE
-        {: RESULT = (ConstExpr)new Expr(getCurrLineNum()); :}
+    |constExpr:constE
+        {: RESULT = (ConstExpr)constE; :}
     /*var expression*/                                                    /*arrayExpr node?? */
-    |varExpr:newE
-        {: RESULT = (VarExpr)new Expr(getCurrLineNum()); :}
+    |varExpr:varE
+        {: RESULT = (VarExpr)varE; :}
     /*parenthesis expression*/
     |LPAREN expr:e RPAREN
-        {: RESULT = new Expr(getCurrLineNum()); :}
+        {: RESULT = (Expr)e; :}
     ;
 
 /*assignment expression*/
 assignExpr
     ::= varExpr:varE ASSIGN expr:e
-    { RESULT = new AssignExpr(getCurrLineNum(), null, varE, e); :}       /*AssignExpr() needs different set of arguments*/
+    {:RESULT = new AssignExpr(getCurrLineNum(), null, varE, e); :}       /*AssignExpr() needs different set of arguments*/
     ;
 
 /*dispatch expression*/                                              /*DispatchExpr object needs different set of arguments without the optional expr*/
 dispatchExpr
     /*without the optional [Expr.]*/
-    ::= ID: methodName LPAREN expr_List:el RPAREN
-        {RESULT = new DispatchExpr(getCurrLineNum(),null, methodName,el); :}
+    ::= ID: methodName LPAREN expr_list:el RPAREN
+        {:RESULT = new DispatchExpr(getCurrLineNum(),null, methodName,el); :}
     /*with the optional [Expr .]*/
-    | expr:e DOT ID: methodName LPAREN expr_List:el RPAREN
-        {RESULT = new DispatchExpr(getCurrLineNum(),e,methodName,el); :}
+    | expr:e DOT ID: methodName LPAREN expr_list:el RPAREN
+        {:RESULT = new DispatchExpr(getCurrLineNum(),e,methodName,el); :}
     ;
 
 /*new expression*/
 newExpr
     ::= NEW ID:type LPAREN RPAREN
-        {RESULT = new NewExpr(getCurrLineNum(),type); :}
+        {:RESULT = new NewExpr(getCurrLineNum(),type); :}
     | NEW ID:type LBRACE expr:e RBRACE
-        {RESULT = new NewExpr(getCurrLineNum(),type); :}
+        {:RESULT = new NewExpr(getCurrLineNum(),type); :}
     ;
 
 /*instanceof expression*/
 instanceofExpr
     /*without the optional braces []*/
     ::=expr:e INSTANCEOF ID:type
-        {RESULT = new InstanceofExpr(getCurrLineNum(),e,type); :}
+        {:RESULT = new InstanceofExpr(getCurrLineNum(),e,type); :}
     /*with the optional [] */
     | expr:e INSTANCEOF ID:type LBRACE RBRACE
-        {RESULT = new InstanceofExpr(getCurrLineNum(),e,type); :}
+        {:RESULT = new InstanceofExpr(getCurrLineNum(),e,type); :}
     ;
 /*cast expression*/
 castExpr
     /*without the optional braces [] */
     ::= LPAREN ID:type RPAREN LPAREN expr:e RPAREN
-        {RESULT = new CastExpr(getCurrLineNum(),type,e); :}
+        {:RESULT = new CastExpr(getCurrLineNum(),type,e); :}
     /* with the optional braces [] */
     | LPAREN ID:type LBRACE RBRACE RPAREN LPAREN expr:e RPAREN
-        {RESULT = new CastExpr(getCurrLineNum(),type,e); :}
+        {:RESULT = new CastExpr(getCurrLineNum(),type,e); :}
     ;
 
 /*binary expression*/
 binaryExpr                                                 /*argument does not match for constructing BinaryExpr object*/
     /*binary arithmetic expression*/
     ::= binaryArithExpr:bArithExpr
-        {RESULT = (BinaryArithExpr)new BinaryExpr(getCurrLineNum(), bArithExpr.getLeftExpr(), bArithExpr.getRightExpr()); :}
+        {:RESULT = (BinaryArithExpr)bArithExpr; :}
     /*binary comp expression*/
     | binaryCompExpr: bCompExpr
-        {RESULT = (BinaryCompExpr)new BinaryExpr(getCurrLineNum(),bCompExpr.getLeftExpr(),bCompExpr.getRightExpr() ); :}
+        {:RESULT = (BinaryCompExpr)bCompExpr; :}
     /*binary logic expression*/
     | binaryLogicExpr:bLogicExpr
-        {RESULT = (BinaryLogicExpr)new BinaryExpr(getCurrLineNum(),bLogicExpr.getLeftExpr(),bLogicExpr.getRightExpr()); :}
+        {:RESULT = (BinaryLogicExpr)bLogicExpr; :}
     ;
 
 /*unary expression*/
 unaryExpr
     /*unary neg expression*/
     ::= unaryNegExpr:uNegExpr
-        {RESULT = (UnaryNegExpr)new UnaryExpr(getCurrLineNum(),uNegExpr); :}
+        {:RESULT = (UnaryNegExpr)uNegExpr; :}
     /*unary not expression*/
     | unaryNotExpr: uNotExpr
-        {RESULT = (UnaryNotExpr)new UnaryExpr(getCurrLineNum(),uNotExpr); :}
+        {:RESULT = (UnaryNotExpr)uNotExpr; :}
     /*unary incr expression*/
     | unaryIncrExpr:uIncrExpr
-        {RESULT = (UnaryIncrExpr)new UnaryExpr(getCurrLineNum(),uIncrExpr); :}
+        {:RESULT = (UnaryIncrExpr)uIncrExpr; :}
     /*unary decr expression*/
     | unaryDecrExpr:uDecrExpr
-        {RESULT = (UnaryDecrExpr)new UnaryExpr(getCurrLineNum(),uDecrExpr); :}
+        {:RESULT = (UnaryDecrExpr)uDecrExpr; :}
     ;
 /*const expression*/
 constExpr
     /*int const*/
     ::= INT_CONST
-        {RESULT = new ConstExpr(getCurrLineNum(),INT_CONST); :}
+        {:RESULT = (ConstExpr)INT_CONST); :}
     /*boolean const*/
     | BOOLEAN_CONST
-        {RESULT = new ConstExpr(getCurrLineNum(),BOOLEAN_CONST); :}
+        {:RESULT = (ConstExpr)BOOLEAN_CONST); :}
     /*string const*/
     |STRING_CONST
-        {RESULT = new ConstExpr(getCurrLineNum(),BOOLEAN_CONST); :}
-	;
+        {:RESULT = (ConstExpr)STRING_CONST); :}
+    ;
 
 /*binary arith expression*/
 binaryArithExpr
     /*leftExpr + rightExpr*/
     ::= expr:leftExpr PLUS expr:rightExpr
-        {RESULT = new BinaryArithExpr(getCurrLineNum(),leftExpr,rightExpr); :}
+        {:RESULT = new BinaryArithPlusExpr(getCurrLineNum(),leftExpr,rightExpr); :}
     /*leftExpr - rightExpr*/
     | expr:leftExpr MINUS expr:rightExpr
-        {RESULT = new BinaryArithExpr(getCurrLineNum(),leftExpr,rightExpr); :}
+        {:RESULT = new BinaryArithMinusExpr(getCurrLineNum(),leftExpr,rightExpr); :}
     /*leftExpr / rightExpr*/
     | expr:leftExpr DIVIDE expr:rightExpr
-        {RESULT = new BinaryArithExpr(getCurrLineNum(),leftExpr,rightExpr); :}
+        {:RESULT = new BinaryArithDivideExpr(getCurrLineNum(),leftExpr,rightExpr); :}
     /*leftExpr * rightExpr*/
     | expr:leftExpr TIMES expr:rightExpr
-        {RESULT = new BinaryArithExpr(getCurrLineNum(),leftExpr,rightExpr); :}
+        {:RESULT = new BinaryArithTimesExpr(getCurrLineNum(),leftExpr,rightExpr); :}
     /*leftExpr % rightExpr*/
     | expr:leftExpr MODULUS expr:rightExpr
-        {RESULT = new BinaryArithExpr(getCurrLineNum(),leftExpr,rightExpr); :}
+        {:RESULT = new BinaryArithModulusExpr(getCurrLineNum(),leftExpr,rightExpr); :}
     ;
 
 /*binary comp expression*/
 binaryCompExpr
     /*leftExpr == rightExpr*/
     ::= expr:leftExpr EQ expr:rightExpr
-        {RESULT = new BinaryCompExpr(getCurrLineNum(),leftExpr,rightExpr); :}
+        {:RESULT = new BinaryCompEqExpr(getCurrLineNum(),leftExpr,rightExpr); :}
     /*leftExpr != rightExpr*/
     | expr:leftExpr NE expr:rightExpr
-        {RESULT = new BinaryCompExpr(getCurrLineNum(),leftExpr,rightExpr); :}
+        {:RESULT = new BinaryCompNeExpr(getCurrLineNum(),leftExpr,rightExpr); :}
     /*leftExpr < rightExpr*/
     | expr:leftExpr LT expr:rightExpr
-        {RESULT = new BinaryCompExpr(getCurrLineNum(),leftExpr,rightExpr); :}
+        {:RESULT = new BinaryCompLtExpr(getCurrLineNum(),leftExpr,rightExpr); :}
     /*leftExpr <= rightExpr*/
     | expr:leftExpr LEQ expr:rightExpr
-        {RESULT = new BinaryCompExpr(getCurrLineNum(),leftExpr,rightExpr); :}
+        {:RESULT = new BinaryCompLeqExpr(getCurrLineNum(),leftExpr,rightExpr); :}
     /*leftExpr > rightExpr*/
     | expr:leftExpr GT expr:rightExpr
-        {RESULT = new BinaryCompExpr(getCurrLineNum(),leftExpr,rightExpr); :}
+        {:RESULT = new BinaryCompGtExpr(getCurrLineNum(),leftExpr,rightExpr); :}
     /*leftExpr >= rightExpr*/
     | expr:leftExpr GEQ expr:rightExpr
-        {RESULT = new BinaryCompExpr(getCurrLineNum(),leftExpr,rightExpr); :}
+        {:RESULT = new BinaryCompGeqExpr(getCurrLineNum(),leftExpr,rightExpr); :}
     ;
 
 /*binary logic expression*/
 binaryLogicExpr
     /*leftExpr && rightExpr*/
     ::= expr:leftExpr AND expr:rightExpr
-        {RESULT = new BinaryLogicExpr(getCurrLineNum(),leftExpr,rightExpr); :}
+        {:RESULT =(BinaryLogicExpr) new BinaryLogicAndExpr(getCurrLineNum(),leftExpr,rightExpr); :}
     /*leftExpr || rightExpr*/
     | expr:leftExpr OR expr:rightExpr
-        {RESULT = new BinaryLogicExpr(getCurrLineNum(),leftExpr,rightExpr); :}
+        {:RESULT = (BinaryLogicExpr )new BinaryLogicOrExpr(getCurrLineNum(),leftExpr,rightExpr); :}
     ;
 
 /*unary neg expression*/
 unaryNegExpr
-    := MINUS expr:e
-     {RESULT = new UnaryNegExpr(getCurrLineNum(),e); :}
+    ::= MINUS expr:e
+     {:RESULT = new UnaryNegExpr(getCurrLineNum(),e); :}
     ;
 
 /*unary not expression*/
 unaryNotExpr
-    := NOT expr:e
-     {RESULT = new UnaryNegExpr(getCurrLineNum(),e); :}
+    ::= NOT expr:e
+     {:RESULT = new UnaryNegExpr(getCurrLineNum(),e); :}
     ;
 
 /*unary incr expression*/
 unaryIncrExpr
     /*operator is prefix*/
-    := PLUS PLUS expr:e
-     {RESULT = new UnaryIncrExpr(getCurrLineNum(),e,false); :}
+    ::= PLUS PLUS expr:e
+     {:RESULT = new UnaryIncrExpr(getCurrLineNum(),e,false); :}
     /*operator is postfix*/
     | expr:e PLUS PLUS
-     {RESULT = new UnaryIncrExpr(getCurrLineNum(),e,true); :}
+     {:RESULT = new UnaryIncrExpr(getCurrLineNum(),e,true); :}
     ;
 
 
 /*unary decr expression*/
 unaryDecrExpr
     /*operator is prefix*/
-    := MINUS MINUS expr:e
-     {RESULT = new UnaryDecrExpr(getCurrLineNum(),e,false); :}
+    ::= MINUS MINUS expr:e
+     {:RESULT = new UnaryDecrExpr(getCurrLineNum(),e,false); :}
     /*operator is postfix*/
     | expr:e MINUS MINUS
-     {RESULT = new UnaryDecrExpr(getCurrLineNum(),e,true); :}
+     {:RESULT = new UnaryDecrExpr(getCurrLineNum(),e,true); :}
     ;
 
-/*var expr*/                        /*not sure about the combinations of optional elements*/
+/*var expr*/
 varExpr
     /*without the optional elements */
     ::=ID:name
-       {RESULT = new VarExpr(getCurrLineNum(),null, name); :}
+       {:RESULT = new VarExpr(getCurrLineNum(),null, name); :}
     /* with the first optional element before the identifier*/
     | ID:ref DOT ID:name
-        {RESULT = new VarExpr(getCurrLineNum(),new VarExpr(getCurrLineNum(), null, name), name); :}
+       {:RESULT = new VarExpr(getCurrLineNum(),new VarExpr(getCurrLineNum(), null, name), name); :}
     /*with the last optional element after the identifier*/
     | ID:name LBRACE expr:e RBRACE
-        {RESULT = new VarExpr(getCurrLineNum(),e, name); :}
+       {:RESULT = new VarExpr(getCurrLineNum(),e, name); :}
     /*with all possible options of []*/
     |ID:ref DOT ID:name LBRACE expr:e RBRACE
-        {RESULT = new VarExpr(getCurrLineNum(),new VarExpr(getCurrLineNum(), null, name), name); :}
+       {:RESULT = new VarExpr(getCurrLineNum(),new VarExpr(getCurrLineNum(), null, name), name); :}
      ;
 
 /* add more productions... */
